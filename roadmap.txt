@@ -1,0 +1,22 @@
+Additional ideas:
+
+Batch log processing
+Dynamic website
+Regular NLP function to adjust categorizations as necessary
+
+
+
+Visualization:
+Group by 10 minute segments
+
+Bucket Productive Activity vs. Wasteful Activity
+
+Define productive metrics - coding vs. messaging vs. LinkedIn etc.
+
+
+
+Questions to answer?
+* When is my most effective time of day?
+* When is my most distracted time of day?
+* What activities can I move into marginal times?
+* How often am I in deep focus?
