@@ -9,15 +9,45 @@ Base = declarative_base()
 
 # Define the LogEntry table structure
 class LogEntry(Base):
-    """Represents a log entry in the database."""
     __tablename__ = 'log_entries'
-    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    id = Column(Integer, primary_key=True)
     timestamp = Column(DateTime)
-    window_title = Column(String)
+    date = Column(String)
+    hour = Column(Integer)
+    minute = Column(Integer)
     window_url = Column(String)
     window_url_base = Column(String)
+    window_title = Column(String)
     keyboard_events = Column(Integer)
     mouse_events = Column(Integer)
+    # Add your new columns here
+# Define the LogEntry table structure
+
+class LogEntry2(Base):
+    __tablename__ = 'log_entries2'
+
+    id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime)
+    date = Column(String)
+    hour = Column(Integer)
+    minute = Column(Integer)
+    window_url = Column(String)
+    window_url_base = Column(String)
+    window_title = Column(String)
+    keyboard_events = Column(Integer)
+    mouse_events = Column(Integer)
+    # Add your new columns here
+
+# Define the WindowCategory table structure
+class WindowCategory(Base):
+    __tablename__ = 'window_categories'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    window_title = Column(String)
+    window_url_base = Column(String)
+    window_category = Column(String)
+    row_count = Column(Integer)
 
 # Create the table in the database
 Base.metadata.create_all(engine)

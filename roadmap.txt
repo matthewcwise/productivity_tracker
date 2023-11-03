@@ -20,3 +20,11 @@ Questions to answer?
 * When is my most distracted time of day?
 * What activities can I move into marginal times?
 * How often am I in deep focus?
+
+Metrics for
+* focus - was I staying on task?
+* Productive - was I effective during my focused time?
+
+
+Have GPT analyze each row and do "category" and "activity"
+And then define when I'm distracted / not on task / switching between tasks

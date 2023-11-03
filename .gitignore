@@ -1,11 +1,3 @@
+experimental_code
 *.db
-dbCreate.py
-dbDropTable.py
-dbIndex.py
-dbTrailing.py
-dbWindowCategory.py
-flask_app.py
-functions.py
-mouse_click.py
-page.html
 *.csv

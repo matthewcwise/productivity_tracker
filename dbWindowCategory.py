@@ -1,9 +1,11 @@
-import re
 from sqlalchemy import create_engine, Column, Integer, String, func
+from sqlalchemy import or_
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm import declarative_base  # Import declarative_base from the orm module
+from sqlalchemy.orm import declarative_base
+from dbCreate import LogEntry2, WindowCategory  # Make sure to import LogEntry from your dbCreate file
+from functions import *
 
-from dbCreate import LogEntry  # Make sure to import LogEntry from your dbCreate file
+import re
 
 # Create the database engine
 engine = create_engine('sqlite:///window_activity.db')
@@ -11,14 +13,6 @@ engine = create_engine('sqlite:///window_activity.db')
 # Define the declarative base
 Base = declarative_base()
 
-# Define the WindowCategory table structure
-class WindowCategory(Base):
-    __tablename__ = 'window_categories'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    window_title = Column(String)
-    window_url_base = Column(String)
-    window_category = Column(String)
-    row_count = Column(Integer)  # Add a column for the row count
 
 # Create the table if it doesn't exist
 Base.metadata.create_all(engine)
@@ -27,21 +21,35 @@ Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
 
+# Delete all rows from the window_categories table
+session.query(WindowCategory).delete()
+session.commit()
+
 categories = [
-    {'name': 'Games', 'regex': r'(game|steam|gaming|MTGA|solitaire)', 'priority': 4},
-    {'name': 'Homework', 'regex': r'(HW1|HW2|HW3|homework|CS236|Ed Discussion|study|lecture)', 'priority': 3},
-    {'name': 'Coding', 'regex': r'(Visual Studio Code | Windows Powershell | .db |.py )', 'priority': 2},
-    {'name': 'Productivity', 'regex': r'(mail)', 'priority': 1},
+    {'name': 'Games', 'regex': r'(game|steam|gaming|MTGA|solitaire)', 'priority': 10},
+    {'name': 'RPA', 'regex': r'(HBS|HBR|flow chart tools|pdf text extraction|Disruptive Innovation|Christensen|Rose Park)', 'priority': 5},
+    {'name': 'School', 'regex': r'(vae|QueueStatus|HW1|HW2|HW3|overleaf|logits|temperature scal|homework|softmax|Latex|CS236|Gradescope|AI Project|Ed Discussion|study|lecture)', 'priority': 5},
+    {'name': 'Coding', 'regex': r'(nltk|root@family|SQLite|optimize code|hugging face|hugging_face|huggingface|Jupyter|Python|Visual Studio Code|Windows Powershell|.db|.py)', 'priority': 4},
+    {'name': 'Communication', 'regex': r'(1:1 note|zoom|inbox|mail|messenger|outlook)', 'priority': 3},
+    {'name': 'Gospel', 'regex': r'(priesthood|LDS|Book of Mormon|scripture|spirit)', 'priority': 3},
+    {'name': 'Productivity', 'regex': r'(calendar|productivity dash|mouse activity vis|productivity app|ChatGPT)', 'priority': 2},
+    {'name': 'Job Hunt', 'regex': r'(resume)', 'priority': 1},
+    {'name': 'Finances', 'regex': r'(Mint|Ally|MACU|Wells Fargo|Chase)', 'priority': 1},
+    {'name': 'None', 'regex': r'(Windows Default Lock Screen)', 'priority': 1},
+    {'name': 'Documents', 'regex': r'(google docs)', 'priority': 2},
+    {'name': 'Video', 'regex': r'(YouTube)', 'priority': 1},
     {'name': 'Other', 'regex': r'.*', 'priority': 0},  # Default category
 ]
 
-# Query the top 5 rows from the log_entries table
-# activity_category = session.query(LogEntry.window_title, LogEntry.window_url_base).distinct().all()
-
-activity_category = session.query(LogEntry.window_title, LogEntry.window_url_base) \
-    .filter(LogEntry.window_title.isnot(None), LogEntry.window_title != '') \
-    .distinct() \
-    .all()
+# Function to get the count of rows for a given window_title and window_url_base
+def get_row_count(window_title, window_url_base):
+    return session.query(func.count(LogEntry2.id)) \
+        .filter(
+            LogEntry2.window_title == window_title,
+            LogEntry2.window_url_base == window_url_base,
+            or_(LogEntry2.keyboard_events != 0, LogEntry2.mouse_events != 0)  # new line to filter out unwanted rows
+        ) \
+        .scalar()
 
 def categorize_window_title(window_title):
     for category in categories:
@@ -49,14 +57,12 @@ def categorize_window_title(window_title):
             return category['name']
     return 'Other'  # Default category
 
-# Function to get the count of rows for a given window_title and window_url_base
-def get_row_count(window_title, window_url_base):
-    return session.query(func.count(LogEntry.id)) \
-        .filter(
-            LogEntry.window_title == window_title,
-            LogEntry.window_url_base == window_url_base
-        ) \
-        .scalar()
+# Query the active rows from the log_entries table
+activity_category = session.query(LogEntry2.window_title, LogEntry2.window_url_base) \
+    .filter(LogEntry2.window_title.isnot(None), LogEntry2.window_title != '') \
+    .filter((LogEntry2.keyboard_events != 0) | (LogEntry2.mouse_events != 0)) \
+    .distinct() \
+    .all()
 
 # Populate the WindowCategory table with distinct window titles and their categories
 for title, url_base in activity_category:
