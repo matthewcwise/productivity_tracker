@@ -38,6 +38,37 @@ class LogEntry2(Base):
     keyboard_events = Column(Integer)
     mouse_events = Column(Integer)
     # Add your new columns here
+    
+class LogEntry3(Base):
+    __tablename__ = 'log_entries3'
+
+    id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime)
+    date = Column(String)
+    hour = Column(Integer)
+    minute = Column(Integer)
+    window_url = Column(String)
+    window_url_base = Column(String)
+    window_title = Column(String)
+    keyboard_events = Column(Integer)
+    mouse_events = Column(Integer)
+    # Add your new columns here
+
+    
+class LogEntryAgg(Base):
+    __tablename__ = 'LogEntryAgg'
+
+    id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime)
+    date = Column(String)
+    hour = Column(Integer)
+    minute = Column(Integer)
+    window_url = Column(String)
+    window_url_base = Column(String)
+    window_title = Column(String)
+    keyboard_events = Column(Integer)
+    mouse_events = Column(Integer)
+    # Add your new columns here
 
 # Define the WindowCategory table structure
 class WindowCategory(Base):

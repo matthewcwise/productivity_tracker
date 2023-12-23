@@ -28,3 +28,26 @@ Metrics for
 
 Have GPT analyze each row and do "category" and "activity"
 And then define when I'm distracted / not on task / switching between tasks
+
+Define sessions.
+
+When I'm programming, what time of day is most productive?
+
+There are times when I'm thinking, thinking about code
+
+
+Group Sessions
+ * need to see overall productivity of sessions
+ * Overall focus of session
+
+
+What about sessions and blocks?
+* Blocks could show productivity (i.e. in this 10-minute window, how productive was I?)
+
+Sessions are broken down into blocks.
+
+From the time the session begins.
+
+Do we see a tail? Productivity is high and then drops off?
+
+

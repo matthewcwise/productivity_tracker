@@ -16,19 +16,48 @@
     </style>
 </head>
 <body class="bg-gray-100 font-sans leading-normal tracking-normal custom-bg">
-
+    
     <div class="container mx-auto p-8">
         <div class="flex items-center justify-center h-20 custom-shadow rounded-lg mb-8">
-            <h1 class="text-4xl font-bold text-indigo-700">Keyboard / Mouse Activity</h1>
+            <h1 class="text-4xl font-bold text-indigo-700">Matt's Productivity Dashboard</h1>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <!-- Existing Visualizations -->
             <div class="bg-white p-6 rounded-lg shadow-md custom-shadow">
+                <h2 class="text-2xl mb-4 text-indigo-500">Keyboard Activity All Time</h2>
+                <img src="images/trailing_all.png" alt="Total Keyboard Activity by Hour of Day">
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md custom-shadow">
+                <h2 class="text-2xl mb-4 text-green-600">Heatmap: <span class="subtitle">Computer Activity Hour</span></h2>
+                <p class="text-sm text-gray-600 mb-2">Gray: no recorded activity</p>
+                <img src="images/heatmap.png" alt="Average Keyboard Activity on Productive Activities by Hour of Day">
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow-md custom-shadow">
+                <h2 class="text-2xl mb-4 text-green-600">Average Productivity By Hour</h2>
+                <img src="images/programming_productivity.png" alt="Average Keyboard Activity on Productive Activities by Hour of Day">
+            </div>
+            
+
+            <div class="bg-white p-6 rounded-lg shadow-md custom-shadow">
+                <h2 class="text-2xl mb-4 text-green-600">Heatmap: <span class="subtitle">Productivity By Hour</span></h2>
+                <p class="text-sm text-gray-600 mb-2">Gray: less than 30 minutes of data</p>
+                <img src="images/heatmap_productivity.png" alt="Average Keyboard Activity on Productive Activities by Hour of Day">
+            </div>
+                        
+            <div class="bg-white p-6 rounded-lg shadow-md custom-shadow">
                 <h2 class="text-2xl mb-4 text-green-600">Category Timestamps</h2>
                 <img src="images/category_productive.png" alt="What Constitutes a Productive Timestamp">
             </div>
 
+            <div class="bg-white p-6 rounded-lg shadow-md custom-shadow">
+                <h2 class="text-2xl mb-4 text-green-600">Heatmap: <span class="subtitle">Productivity Ratio By Hour</span></h2>
+                <p class="text-sm text-gray-600 mb-2">Gray: less than 30 minutes of data</p>
+                <img src="images/heatmap_productive_ratio.png" alt="Average Keyboard Activity on Productive Activities by Hour of Day">
+            </div>
+            
             <div class="bg-white p-6 rounded-lg shadow-md custom-shadow">
                 <h2 class="text-2xl mb-4 text-red-600">Waterfall Activity</h2>
                 <img src="images/activity_focus.png" alt="Activity Focus">
@@ -47,11 +76,6 @@
             <div class="bg-white p-6 rounded-lg shadow-md custom-shadow">
                 <h2 class="text-2xl mb-4 text-indigo-500">Activity Yesterday</h2>
                 <img src="images/trailing_yesterday.png" alt="Visualization of Keyboard and Mouse Activity for Yesterday">
-            </div>
-
-            <div class="bg-white p-6 rounded-lg shadow-md custom-shadow">
-                <h2 class="text-2xl mb-4 text-indigo-500">Activity All Time</h2>
-                <img src="images/trailing_all.png" alt="Visualization of Keyboard and Mouse Activity for All Time">
             </div>
 
             <!-- New Visualizations -->

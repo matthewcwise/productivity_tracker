@@ -1,8 +1,10 @@
 # import sqlite3
-from collections import defaultdict
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import sqlite3
+
+from collections import defaultdict
+import pandas as pd
 import matplotlib.colors as mcolors
 from sqlalchemy import create_engine, func, text
 from functions import *
@@ -101,9 +103,9 @@ def create_horizontal_bar_chart(df, category, axis):
 
 # all is now in 6-hour blocks
 trailing_all = """with trailing_view as(
-SELECT 
-datetime((strftime('%s', le.timestamp) / 21600) * 21600, 'unixepoch') as rounded_timestamp, sum(le.keyboard_events) AS keyboard_count, sum(le.mouse_events) AS click_count
-FROM log_entries2 le
+SELECT
+    hour as rounded_timestamp, sum(le.keyboard_events) AS keyboard_count, sum(le.mouse_events) AS click_count
+FROM LogEntryAgg le
 GROUP BY rounded_timestamp
 )
 SELECT rounded_timestamp AS timestamp, keyboard_count, click_count
@@ -112,9 +114,9 @@ FROM trailing_view;
 
 trailing_yesterday = """with trailing_view as(
 SELECT datetime((strftime('%s', le.timestamp) / 3600) * 3600, 'unixepoch') as rounded_timestamp, sum(le.keyboard_events) AS keyboard_count, sum(le.mouse_events) AS click_count
-FROM log_entries2 le
+FROM LogEntryAgg le
 
---WHERE date = (select max(date) from log_entries2 le2)-1
+--WHERE date = (select max(date) from LogEntryAgg le2)-1
 
 WHERE  le.timestamp >= datetime('now', '-1 day', 'start of day', '-7 hours') -- Start of yesterday
 AND le.timestamp < datetime('now', 'start of day', '-7 hours') -- Start of today
@@ -126,8 +128,8 @@ FROM trailing_view;
 
 trailing_today = """with trailing_view as(
 SELECT datetime((strftime('%s', le.timestamp) / 600) * 600, 'unixepoch') as rounded_timestamp, sum(le.keyboard_events) AS keyboard_count, sum(le.mouse_events) AS click_count
-FROM log_entries2 le
-WHERE date = (select max(date) from log_entries2 le2)
+FROM LogEntryAgg le
+WHERE date = (select max(date) from LogEntryAgg le2)
 GROUP BY rounded_timestamp
 )
 SELECT rounded_timestamp AS timestamp, keyboard_count, click_count FROM trailing_view;
@@ -135,7 +137,7 @@ SELECT rounded_timestamp AS timestamp, keyboard_count, click_count FROM trailing
 
 trailing_90 = """with trailing_view as(
 SELECT datetime((strftime('%s', le.timestamp) / 60) * 60, 'unixepoch') as rounded_timestamp, sum(le.keyboard_events) AS keyboard_count,sum(le.mouse_events) AS click_count
-FROM log_entries2 le
+FROM LogEntryAgg le
 WHERE le.timestamp >= datetime('now', '-10 hours')
 GROUP BY rounded_timestamp
 )
@@ -145,7 +147,7 @@ FROM trailing_view;
 
 trailing_today_category = """WITH RankedWindows AS (
 SELECT window_title, count(timestamp) as timestamps, sum(keyboard_events) AS keyboard_count, sum(mouse_events) AS click_count, ROW_NUMBER() OVER (ORDER BY count(timestamp) DESC) AS rn
-FROM log_entries2 le
+FROM LogEntryAgg le
 WHERE le.timestamp >= datetime('now', 'start of day', '-7 hours') -- Start of today
 GROUP BY window_title
 HAVING sum(keyboard_events) > 0 OR sum(mouse_events) > 0
@@ -173,7 +175,7 @@ with engine.connect() as conn:
             wc.window_category,
             COUNT(*) as cnt
         FROM 
-            log_entries2 le
+            LogEntryAgg le
         JOIN 
             window_categories wc ON le.window_title = wc.window_title
         WHERE 
@@ -204,7 +206,7 @@ def recent_activity_categories():
             wc.window_category,
             COUNT(*) as cnt
         FROM 
-            log_entries2 le
+            log_entries3 le
         JOIN 
             window_categories wc ON le.window_title = wc.window_title
         WHERE 
@@ -291,17 +293,27 @@ def recent_activity_categories():
 
     plt.savefig(f'images/activity_focus.png')
     plt.close()
-recent_activity_categories()
+
+try:
+    recent_activity_categories()
+except:
+    pass
 
 ################################################################
 ################################################################
 # Generate Charts
 ################################################################
 ################################################################
-plot_activity(trailing_all, 'trailing_all', 240, 2880)  # Plot using trailing_all query
-plot_activity(trailing_yesterday, 'trailing_yesterday', 60, 120)
-plot_activity(trailing_today, 'trailing_today', 60, 120)
-plot_activity(trailing_90, 'trailing_90', 1, 30)
+
+try:
+    plot_activity(trailing_yesterday, 'trailing_yesterday', 60, 120)
+except:
+    pass
+try:
+    plot_activity(trailing_today, 'trailing_today', 60, 120)
+except:
+    pass
+# plot_activity(trailing_90, 'trailing_90', 1, 30)
 
 category_results = get_data_from_2_col_query(category_query)
 create_horizontal_bar_chart(category_results, "window_category", "timestamps")
@@ -320,7 +332,7 @@ WITH logs AS (
         wc.window_category,
         ROW_NUMBER() OVER (ORDER BY wc.window_category DESC) AS rn
     FROM 
-        log_entries2 le
+        LogEntryAgg le
     LEFT JOIN 
         window_categories wc ON le.window_title = wc.window_title
     WHERE 
@@ -363,7 +375,7 @@ WITH logs AS (
         wc.window_category,
         ROW_NUMBER() OVER (ORDER BY wc.window_category DESC) AS rn
     FROM 
-        log_entries2 le
+        LogEntryAgg le
     LEFT JOIN 
         window_categories wc ON le.window_title = wc.window_title
     WHERE 
@@ -420,3 +432,450 @@ conn.close()
     # (SELECT keyboard_events FROM logs AS sub WHERE sub.window_category = logs.window_category ORDER BY keyboard_events LIMIT 1 OFFSET (COUNT(*) * 0.75)) AS p75_keyboard_events,
     # (SELECT keyboard_events FROM logs AS sub WHERE sub.window_category = logs.window_category ORDER BY keyboard_events LIMIT 1 OFFSET (COUNT(*) * 0.8)) AS p80_keyboard_events,
     # (SELECT keyboard_events FROM logs AS sub WHERE sub.window_category = logs.window_category ORDER BY keyboard_events LIMIT 1 OFFSET (COUNT(*) * 0.9)) AS p90_keyboard_events
+
+
+
+programming_productivity = """WITH log2 AS (
+    SELECT 
+        hour,
+        keyboard_events,
+        mouse_events
+    FROM 
+        LogEntryAgg le
+    INNER JOIN 
+        window_categories wc ON le.window_title = wc.window_title
+        AND wc.window_category IN ('Coding', 'RPA', 'School')
+    WHERE 
+        (le.keyboard_events + le.mouse_events) > 0
+        and (le.keyboard_events + le.mouse_events) < 150
+),
+log1 AS (
+    SELECT 
+        hour,
+        keyboard_events,
+        mouse_events
+    FROM 
+        log_entries le
+    INNER JOIN 
+        window_categories wc ON le.window_title = wc.window_title
+        AND wc.window_category IN ('Coding', 'RPA', 'School')
+    WHERE 
+        (le.keyboard_events + le.mouse_events) > 0
+        and (le.keyboard_events + le.mouse_events) < 150
+)
+
+SELECT
+    log2.hour,
+    (SUM(log2.keyboard_events) + SUM(log1.keyboard_events)) / (COUNT(log2.hour) + COUNT(log1.hour)) AS keyboard_events,
+    (SUM(log2.mouse_events) + SUM(log1.mouse_events)) / (COUNT(log2.hour) + COUNT(log1.hour)) AS mouse_events
+
+FROM log2
+
+LEFT JOIN log1 ON log2.hour = log1.hour
+GROUP BY log2.hour
+ORDER BY log2.hour;
+
+"""
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(12, 6))
+
+# Assuming get_data_from_query is defined and returns the appropriate data
+rows = get_data_from_query(programming_productivity)
+
+# Initialize counts for each hour to zero
+keyboard_events = [0] * 24
+
+# Populate the events counts if data exists for that hour
+for row in rows:
+    hour_index = row[0]  # Assuming the hour is the first element in the row
+    keyboard_events[hour_index] = row[1] or 0  # Replace None with 0
+
+# Determine the top 5 and bottom 5 hours by keyboard_events
+sorted_indices = np.argsort(keyboard_events)
+# Filter out indices with zero counts for the bottom 5
+sorted_indices_with_data = [index for index in sorted_indices if keyboard_events[index] > 0]
+
+top_5_indices = sorted_indices_with_data[-5:]
+# Ensure that we only consider non-zero data for the bottom 5
+bottom_5_indices = sorted_indices_with_data[:5] if len(sorted_indices_with_data) > 5 else []
+
+# Create a list for the colors of the bars
+colors = ['blue' if i not in top_5_indices and i not in bottom_5_indices else 'green' if i in top_5_indices else 'red' for i in range(24)]
+
+# Define the bar width
+bar_width = 0.8
+
+# Set the positions of the bars (0 through 23)
+indices = np.arange(24)
+
+# Plotting the keyboard events with color coding
+plt.bar(indices, keyboard_events, bar_width, label='Keyboard Events', color=colors)
+
+# Adding labels and title
+plt.xlabel('Hour of Day')
+plt.ylabel('Events Count')
+plt.title('Programming/School Keyboard Events by Hour')
+
+# Adding the legend
+plt.legend()
+
+# Setting the tick labels to show each hour (0 through 23)
+plt.xticks(indices, [i for i in range(24)])
+
+# Saving the plot
+plt.savefig('images/programming_productivity.png')
+
+# Close the plot figure
+plt.close()
+
+
+plt.figure(figsize=(12, 6))
+
+# Assuming get_data_from_query is defined and returns the appropriate data
+rows = get_data_from_query(trailing_all)
+
+# Initialize counts for each hour to zero
+keyboard_events = [0] * 24
+mouse_events = [0] * 24
+
+# Populate the events counts if data exists for that hour
+for row in rows:
+    hour_index = row[0]  # Assuming the hour is the first element in the row
+    keyboard_events[hour_index] = row[1] or 0  # Replace None with 0
+    mouse_events[hour_index] = row[2] or 0  # Replace None with 0
+
+# Define the bar width
+bar_width = 0.8
+
+# Set the positions of the bars (0 through 23)
+indices = np.arange(24)
+
+# Plotting the keyboard events
+plt.bar(indices, keyboard_events, bar_width, label='Keyboard Events', color='blue')
+
+# Plotting the mouse events on top of the keyboard events
+plt.bar(indices, mouse_events, bar_width, label='Mouse Events', color='orange', bottom=keyboard_events)
+
+# Adding labels and title
+plt.xlabel('Hour of Day')
+plt.ylabel('Events Count')
+plt.title('Programming/School Keyboard and Mouse Events by Hour')
+
+# Adding the legend
+plt.legend()
+
+# Setting the tick labels to show each hour (0 through 23)
+plt.xticks(indices, [i for i in range(24)])
+
+# Saving the plot
+plt.savefig('images/trailing_all_vAlt.png')
+
+# Close the plot figure
+plt.close()
+
+
+
+plt.figure(figsize=(12, 6))
+
+# Initialize counts for each hour to zero
+keyboard_events = [0] * 24
+
+# Populate the events counts if data exists for that hour
+for row in rows:
+    hour_index = row[0]  # Assuming the hour is the first element in the row
+    keyboard_events[hour_index] = row[1] or 0  # Replace None with 0
+
+# Determine the top 5 and bottom 5 hours by keyboard_events
+sorted_indices = np.argsort(keyboard_events)
+# Filter out indices with zero counts for the bottom 5
+sorted_indices_with_data = [index for index in sorted_indices if keyboard_events[index] > 0]
+
+top_5_indices = sorted_indices_with_data[-5:]
+# Ensure that we only consider non-zero data for the bottom 5
+bottom_5_indices = sorted_indices_with_data[:5] if len(sorted_indices_with_data) > 5 else []
+
+# Create a list for the colors of the bars
+colors = ['blue' if i not in top_5_indices and i not in bottom_5_indices else 'green' if i in top_5_indices else 'red' for i in range(24)]
+
+# Define the bar width
+bar_width = 0.8
+
+# Set the positions of the bars (0 through 23)
+indices = np.arange(24)
+
+# Plotting the keyboard events with color coding
+plt.bar(indices, keyboard_events, bar_width, label='Keyboard Events', color=colors)
+
+# Adding labels and title
+plt.xlabel('Hour of Day')
+plt.ylabel('Events Count')
+plt.title('Programming/School Keyboard Events by Hour')
+
+# Adding the legend
+plt.legend()
+
+# Setting the tick labels to show each hour (0 through 23)
+plt.xticks(indices, [i for i in range(24)])
+
+# Saving the plot
+plt.savefig('images/trailing_all.png')
+
+# Close the plot figure
+plt.close()
+
+
+
+from matplotlib.patches import Rectangle
+import matplotlib as mpl
+
+# Create a colormap with a set_bad color
+cmap_val = mpl.cm.get_cmap("hot_r").copy()
+cmap_val.set_bad(color='lightgray')
+  
+heatmap = """SELECT
+    strftime('%w', timestamp) AS weekday,
+    hour as rounded_timestamp,
+    1.0*count(timestamp)/2 AS active
+    
+FROM LogEntryAgg le
+where keyboard_events+mouse_events > 0
+GROUP BY weekday, hour;
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+import sqlite3
+
+# Fetch all rows from the query
+rows = get_data_from_query(heatmap)
+# Initialize a 2D array to store the data
+activity_data = np.full((7, 24), np.nan)
+
+# Populate the activity_data array
+for row in rows:
+    weekday, hour, keyboard_events = int(row[0]), int(row[1]), int(row[2])
+    activity_data[weekday, hour] = keyboard_events
+
+# Close the database connection
+conn.close()
+
+# Creating the heatmap
+plt.figure(figsize=(12, 6))
+im = plt.imshow(activity_data, cmap=cmap_val, interpolation='nearest')
+
+# Adding labels and title
+plt.xlabel('Hour of Day')
+plt.ylabel('Day of Week')
+plt.title('Activity Heatmap by Day and Hour')
+
+# Adjusting the ticks to show days and hours
+days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+hours = [str(i) for i in range(24)]
+plt.xticks(np.arange(24), hours)
+plt.yticks(np.arange(7), days)
+
+# Add the rectangles
+bottom_left_corner = (9 - 0.5, 1 - 0.5)  # Shifted by 0.5
+width = 7 - 1  # Ending x-coordinate - starting x-coordinate
+height = 6 - 1  # Ending y-coordinate - starting y-coordinate
+rect = Rectangle(bottom_left_corner, width, height, linewidth=2, edgecolor='blue', facecolor='none')
+plt.gca().add_patch(rect)
+
+# Second rectangle - if needed, adjust the coordinates as necessary
+# rect2 = Rectangle(other_corner, other_width, other_height, linewidth=2, edgecolor='blue', facecolor='none')
+# plt.gca().add_patch(rect2)
+
+# Create a horizontal colorbar at the bottom
+cbar = plt.colorbar(im, orientation='horizontal', pad=0.1, shrink=0.75)
+cbar.set_label('Active Minutes')
+
+# Adjust layout to prevent overlap
+plt.tight_layout()
+
+# Saving the plot
+plt.savefig('images/heatmap.png')
+
+plt.close()
+
+
+programming_productivity_heatmap = """SELECT 
+        strftime('%w', timestamp) AS weekday,
+        hour,
+        SUM(keyboard_events) / COUNT(keyboard_events) AS keyboard_events,
+        count(timestamp) as timestamps
+
+    FROM 
+        LogEntryAgg le
+    INNER JOIN 
+        window_categories wc ON le.window_title = wc.window_title
+        AND wc.window_category IN ('Coding', 'RPA', 'School')
+    WHERE 
+        (le.keyboard_events + le.mouse_events) > 0
+        and (le.keyboard_events + le.mouse_events) < 150
+    group by 1, 2
+    having count(timestamp) > 60;"""
+
+
+productive_ratio = """
+    SELECT 
+        strftime('%w', timestamp) AS weekday,
+        hour,
+        1.0* sum(case when wc.window_category IN ('Coding', 'RPA', 'School') then 1 else 0 end)/count(timestamp) as productive_ratio,
+        count(timestamp) as timestamp_count
+    FROM
+        LogEntryAgg le
+    left JOIN 
+        window_categories wc ON le.window_title = wc.window_title
+        
+    where le.keyboard_events + le.mouse_events > 0 and (le.keyboard_events + le.mouse_events) < 150
+        group by 1, 2
+        having timestamp_count > 60
+        ;
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+import sqlite3
+
+# Fetch all rows from the query
+rows = get_data_from_query(programming_productivity_heatmap)
+# Initialize a 2D array to store the data
+activity_data = np.full((7, 24), np.nan)
+
+# Populate the activity_data array
+for row in rows:
+    weekday, hour, active = int(row[0]), int(row[1]), int(row[2])
+    activity_data[weekday, hour] = active
+
+# Close the database connection
+conn.close()
+
+# Creating the heatmap
+plt.figure(figsize=(12, 6))
+im = plt.imshow(activity_data, cmap=cmap_val, interpolation='nearest')
+
+# Adding labels and title
+plt.xlabel('Hour of Day')
+plt.ylabel('Day of Week')
+plt.title('Productivity Heatmap by Day and Hour')
+
+# Adjusting the ticks to show days and hours
+days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+hours = [str(i) for i in range(24)]
+plt.xticks(np.arange(24), hours)
+plt.yticks(np.arange(7), days)
+
+# Add the rectangle
+bottom_left_corner = (9 - 0.5, 1 - 0.5)  # Shifted by 0.5
+width = 7 - 1  # Ending x-coordinate - starting x-coordinate
+height = 6 - 1  # Ending y-coordinate - starting y-coordinate
+rect = Rectangle(bottom_left_corner, width, height, linewidth=2, edgecolor='blue', facecolor='none')
+plt.gca().add_patch(rect)
+
+# Create a horizontal colorbar at the bottom
+cbar = plt.colorbar(im, orientation='horizontal', pad=0.1, shrink=0.75)
+cbar.set_label('Activity Level')
+
+# Adjust layout to prevent overlap
+plt.tight_layout()
+
+# Saving the plot
+plt.savefig('images/heatmap_productivity.png')
+
+plt.close()
+
+
+useful_timestamps = """SELECT 
+    -- Adjust the date to the start of the week, which is Monday
+    CASE 
+        WHEN strftime('%w', timestamp) = '0' THEN date(timestamp, 'weekday 1') -- If it's Sunday, move to next day (Monday)
+        ELSE date(timestamp, 'weekday 1', '-7 days') -- Otherwise, move to the Monday of the current week
+    END AS week_start,
+    1.0 * COUNT(timestamp) / 2 / 60 as active_hours
+FROM 
+    LogEntryAgg le
+INNER JOIN 
+    window_categories wc ON le.window_title = wc.window_title
+    AND wc.window_category IN ('Coding', 'RPA', 'School')
+WHERE 
+    (le.keyboard_events + le.mouse_events) > 0
+    and (le.keyboard_events + le.mouse_events) < 150
+GROUP BY
+    week_start
+ORDER BY
+    week_start;
+    """
+
+# Get the data from the database
+rows = get_data_from_query(useful_timestamps)
+
+# Separate the week starts and active hours
+week_starts, active_hours = zip(*rows)
+
+# Create the bar chart
+plt.figure(figsize=(12, 6))
+plt.bar(range(len(active_hours)), active_hours, color='skyblue')
+
+# Adding labels and title
+plt.xlabel('Week Starting Date')
+plt.ylabel('Active Hours')
+plt.title('Active Hours by Week Start Date')
+
+# Adjust the x-axis ticks to show the start dates of the weeks
+plt.xticks(range(len(active_hours)), week_starts)
+
+# Saving the plot
+plt.savefig('images/active_hours_by_week_start.png')
+# Display the plot
+plt.close()
+
+
+# Fetch all rows from the query
+rows = get_data_from_query(productive_ratio)
+
+
+
+# Initialize a 2D array to store the data
+activity_data = np.full((7, 24), np.nan)
+
+# Populate the activity_data array
+for row in rows:
+    weekday, hour, ratio = int(row[0]), int(row[1]), float(row[2])  # Ensure ratio is a float
+    activity_data[weekday, hour] = ratio
+
+# Creating the heatmap
+plt.figure(figsize=(12, 6))
+im = plt.imshow(activity_data, cmap=cmap_val, interpolation='nearest')
+
+# Adding labels and title
+plt.xlabel('Hour of Day')
+plt.ylabel('Day of Week')
+plt.title('Productive Ratio by Day and Hour')
+
+# Adjusting the ticks to show days and hours
+days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+hours = [str(i) for i in range(24)]
+plt.xticks(np.arange(24), hours)
+plt.yticks(np.arange(7), days)
+
+# Add the rectangle
+bottom_left_corner = (9 - 0.5, 1 - 0.5)  # Shifted by 0.5
+width = 7 - 1  # Ending x-coordinate - starting x-coordinate
+height = 6 - 1  # Ending y-coordinate - starting y-coordinate
+rect = Rectangle(bottom_left_corner, width, height, linewidth=2, edgecolor='blue', facecolor='none')
+plt.gca().add_patch(rect)
+
+# Create a horizontal colorbar at the bottom
+cbar = plt.colorbar(im, orientation='horizontal', pad=0.1, shrink=0.75)
+cbar.set_label('Productivity Ratio')
+
+# Adjust layout to prevent overlap
+plt.tight_layout()
+
+# Saving the plot and showing it
+plt.savefig('images/heatmap_productive_ratio.png')
+plt.close()
