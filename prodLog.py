@@ -3,7 +3,6 @@ import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from dbCreate import LogEntry
-from dbCreate import LogEntry3
 # from functions import *
 
 import pygetwindow as gw
@@ -80,7 +79,7 @@ try:
             window_title = ''
 
         # Create a new LogEntry and insert it into the database
-        new_log_entry = LogEntry3(
+        new_log_entry = LogEntry(
             timestamp=current_time,
             date=current_time.strftime('%Y-%m-%d'),
             hour=current_time.hour,  # New column
