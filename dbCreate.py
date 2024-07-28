@@ -4,13 +4,12 @@
 #####################################################################
 #######                                                       #######
 #######                                                       #######
-#######         Create Databases, Declare Achitecture         #######
+#######         Create Databases, Declare Architecture        #######
 #######                                                       #######
 #######                                                       #######
 #####################################################################
 #####################################################################
 #####################################################################
-
 
 
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
@@ -32,21 +31,24 @@ class LogEntry(Base):
     date = Column(String)  # Records the date as a string
     hour = Column(Integer)  # Records the hour of the log entry
     minute = Column(Integer)  # Records the minute of the log entry
-    window_url = Column(String)  # URL of the window being logged
+    url = Column(String)  # URL of the window being logged
+    url_abbrev = Column(String)  # Abbreviated URL of the window
     window_url_base = Column(String)  # Base URL of the window, possibly for easier categorization
     window_title = Column(String)  # Title of the window
     keyboard_events = Column(Integer)  # Number of keyboard events during the logged time
     mouse_events = Column(Integer)  # Number of mouse events during the logged time
 
+# Define the 'LogEntryAgg' table structure using SQLAlchemy ORM modeling.
 class LogEntryAgg(Base):
-    __tablename__ = 'LogEntryAgg'
+    __tablename__ = 'log_entries_agg'
 
     id = Column(Integer, primary_key=True)
     timestamp = Column(DateTime)
     date = Column(String)
     hour = Column(Integer)
     minute = Column(Integer)
-    window_url = Column(String)
+    url = Column(String)
+    url_abbrev = Column(String)
     window_url_base = Column(String)
     window_title = Column(String)
     keyboard_events = Column(Integer)
