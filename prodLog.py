@@ -2,12 +2,12 @@ import time
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from urllib.parse import urlparse
+# from urllib.parse import urlparse
 import pygetwindow as gw
 from pynput import mouse, keyboard
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
+# from selenium import webdriver
+# from selenium.webdriver.chrome.service import Service
+# from selenium.webdriver.chrome.options import Options
 from dbCreate import LogEntry
 import argparse
 
@@ -34,22 +34,10 @@ print(f"Print Log Interval: {print_log_interval} minutes")
 
 verbose = True
 
-key_count = 0
-mouse_count = 0
+key_count, mouse_count = 0, 0
 
 # Create a SQLite database engine that will manage the local database file 'window_activity.db'.
 engine = create_engine('sqlite:///window_activity.db')
-
-# Function to extract abbreviated URL
-
-
-def get_abbreviated_url(url):
-    try:
-        parsed_url = urlparse(url)
-        return parsed_url.netloc
-    except Exception as e:
-        print(f"Error parsing URL: {e}")
-        return None
 
 # Keyboard event handler
 
@@ -100,26 +88,6 @@ session = Session(engine)
 
 log_count = 0
 
-# Setup Selenium to use Chrome DevTools Protocol
-chrome_options = Options()
-chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
-# Path to chromedriver
-service = Service(
-    'C:/Users/matt/OneDrive/Documents/chromedriver-win64/chromedriver.exe')
-
-driver = webdriver.Chrome(service=service, options=chrome_options)
-
-
-def get_active_tab_url():
-    try:
-        # Get the current active window handle
-        original_handle = driver.current_window_handle
-        active_tab = driver.current_url
-        return active_tab
-    except Exception as e:
-        print(f"Error getting active tab URL: {e}")
-        return None
-
 
 try:
     while True:
@@ -134,22 +102,12 @@ try:
         except:
             window_title = ''
 
-        # Extract URL if the active window is a Chrome window
-        url = None
-        url_abbrev = None
-        if 'Google Chrome' in window_title:
-            url = get_active_tab_url()
-            url_abbrev = get_abbreviated_url(url)
-
         # Create a new LogEntry and insert it into the database
         new_log_entry = LogEntry(
             timestamp=current_time,
             date=current_time.strftime('%Y-%m-%d'),
             hour=current_time.hour,
             minute=current_time.minute,
-            url=url,
-            url_abbrev=url_abbrev,
-            window_url_base=url_abbrev,
             window_title=window_title,
             keyboard_events=key_count,
             mouse_events=mouse_count
@@ -160,8 +118,6 @@ try:
         if log_count % log_interval_calc == 0:
             print(f"Latest Row ({log_count}):", current_time.strftime('%Y-%m-%d %H:%M:%S'),
                   window_title,
-                  url,  # Print URL if available
-                  url_abbrev,  # Print abbreviated URL if available
                   key_count,
                   mouse_count)
 
@@ -172,8 +128,6 @@ except KeyboardInterrupt:  # Graceful exit on Ctrl+C
     session.close()  # Close the database session
     mouse_listener.stop()
     keyboard_listener.stop()
-    driver.quit()  # Close the Selenium driver
     print("Logging stopped by user.")
 except Exception as e:
     print(f"An unexpected error occurred: {str(e)}")
-    driver.quit()  # Close the Selenium driver
