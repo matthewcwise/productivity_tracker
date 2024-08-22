@@ -12,7 +12,6 @@
 #####################################################################
 
 
-
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
 from sqlalchemy.orm import declarative_base, sessionmaker
 from dbCreate import LogEntry, LogEntry2, LogEntry3
@@ -27,7 +26,7 @@ session = Session()
 # Counter for added entries
 added_entries, skipped_entries = 0, 0
 
-for table in [LogEntry, LogEntry2, LogEntry3]:    
+for table in [LogEntry, LogEntry2, LogEntry3]:
     # Query all rows from LogEntry table
     log_entries = session.query(table).all()
 
@@ -57,7 +56,7 @@ for table in [LogEntry, LogEntry2, LogEntry3]:
             session.add(new_entry)
             added_entries += 1
         else:
-            skipped_entries +=1
+            skipped_entries += 1
 
 # Commit the session to save the changes
 session.commit()
