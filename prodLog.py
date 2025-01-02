@@ -2,7 +2,7 @@ import threading
 import time
 import pandas as pd
 from sqlalchemy import create_engine
-from utils import clean_window_title, determine_application, assign_container_detail
+from utils import process_row
 from sqlalchemy.orm import Session
 from dbCreate import LogEntry
 import pygetwindow as gw
@@ -76,13 +76,17 @@ keyboard_listener.start()
 mouse_listener = mouse.Listener(on_click=on_click, on_scroll=on_scroll)
 mouse_listener.start()
 
+engine = create_engine('sqlite:///window_activity.db')
 # Create a session to interact with the database
 session = Session(engine)
+
 
 log_count = 0
 # Initialize flow_score and previous_window_title
 flow_score = 0
+focus_score = 0
 previous_window_title = None
+previous_project = None
 
 try:
     while True:
@@ -97,19 +101,20 @@ try:
             window_title = active_window.title
         except:
             window_title = ''
+        window_title, application, domain, detail, project, focus_score, flow_score = process_row(
+            window_title, previous_project, previous_window_title, key_count, mouse_count, focus_score, flow_score)
+                        
+        # window_title = clean_window_title(window_title)
+        # application = determine_application(window_title)
+        # container, detail = assign_container_detail(window_title, application)
+        # project = determine_project(application, container, detail, previous_project)
+        # focus_score, flow_score = update_focus_flow(flow_score, focus_score, 
+        #               project, previous_project, 
+        #               window_title, previous_window_title,
+        #               key_count, mouse_count
+        #               )
         
-        window_title = clean_window_title(window_title)
-        application = determine_application(window_title)
-        container, detail = assign_container_detail(window_title, application)
-
-        # Update flow_score
-        if window_title == previous_window_title:
-            flow_score += 1
-        else:
-            flow_score = 0  # Reset flow_score if the window_title changes
-
         # Update previous_window_title for next iteration
-        previous_window_title = window_title
 
         # Create a new LogEntry and insert it into the database
         new_log_entry = LogEntry(
@@ -121,18 +126,20 @@ try:
             keyboard_events=key_count,
             mouse_events=mouse_count,
             user=current_user,  # Add user to the log entry
-            flow_score=flow_score  # Include flow_score in the log entry
+            focus_score = focus_score,
+            flow_score=flow_score # Include flow_score in the log entry
         )
 
         session.add(new_log_entry)
         session.commit()
 
         if log_count % log_interval_calc == 0:
-        if log_count % log_interval_calc == 0:
             print(f"Latest Row ({log_count}):", current_time.strftime('%Y-%m-%d %H:%M:%S'),
                   window_title, key_count, mouse_count, flow_score, current_user)
 
         log_count += 1
+        previous_window_title = window_title
+        previous_project = project
 
 except KeyboardInterrupt:  # Graceful exit on Ctrl+C
     stop_flag = True  # Stop the input thread
