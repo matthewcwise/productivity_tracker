@@ -43,7 +43,6 @@ def on_click(x, y, button, pressed, verbose=False):
     mouse_count += 1
 
 def on_scroll(x, y, dx, dy, verbose=False):
-def on_scroll(x, y, dx, dy, verbose=False):
     global mouse_count
     mouse_count += 1
 
