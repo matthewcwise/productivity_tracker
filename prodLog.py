@@ -81,13 +81,13 @@ try:
         # Create a new LogEntry and insert it into the database
         new_log_entry = LogEntry(
             timestamp=current_time,
-            date=current_time.strftime('%Y-%m-%d'),
-            hour=current_time.hour,  # New column
-            minute=current_time.minute,  # New column
+            # hour=current_time.hour,
+            # minute=current_time.minute,
             window_title=window_title,
             keyboard_events=key_count,
             mouse_events=mouse_count
         )
+
         session.add(new_log_entry)
         session.commit()
 

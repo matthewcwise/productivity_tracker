@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
 from sqlalchemy.orm import declarative_base, sessionmaker
-from dbCreate import LogEntry, LogEntry2, LogEntry3
+from dbCreate import LogEntry
 from dbCreate import LogEntryAgg
 
 engine = create_engine('sqlite:///window_activity.db')
@@ -12,7 +12,7 @@ session = Session()
 # Counter for added entries
 added_entries, skipped_entries = 0, 0
 
-for table in [LogEntry, LogEntry2, LogEntry3]:    
+for table in [LogEntry]:    
     # Query all rows from LogEntry table
     log_entries = session.query(table).all()
 
@@ -58,7 +58,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import declarative_base
 from dbCreate import LogEntryAgg, WindowCategory  # Make sure to import LogEntry from your dbCreate file
-from functions import *
+from utils import *
 
 import re
 

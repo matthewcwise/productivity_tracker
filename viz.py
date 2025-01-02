@@ -7,7 +7,7 @@ from collections import defaultdict
 import pandas as pd
 import matplotlib.colors as mcolors
 from sqlalchemy import create_engine, func, text
-from functions import *
+from utils import *
 from datetime import datetime, timedelta
 import random
 

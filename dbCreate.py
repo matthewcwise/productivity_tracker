@@ -1,67 +1,54 @@
-#####################################################################
-#####################################################################
-#####################################################################
-#####################################################################
-#######                                                       #######
-#######                                                       #######
-#######         Create Databases, Declare Achitecture         #######
-#######                                                       #######
-#######                                                       #######
-#####################################################################
-#####################################################################
-#####################################################################
+from sqlalchemy import (
+    create_engine, Column, Integer, String, DateTime, ForeignKey, Enum, Index
+)
+from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.sql import func
 
-
-
-from sqlalchemy import create_engine, Column, Integer, String, DateTime
-from sqlalchemy.orm import declarative_base
-
-# Create a SQLite database engine that will manage the local database file 'window_activity.db'.
+# Create a SQLite database engine
 engine = create_engine('sqlite:///window_activity.db')
 
-# Define a declarative base class from which all mapped classes should inherit.
+# Define the declarative base
 Base = declarative_base()
 
-# Define the 'LogEntry' table structure using SQLAlchemy ORM modeling.
+# Define predefined categories
+from enum import Enum as PyEnum
+class ActivityCategory(PyEnum):
+    PRODUCTIVE = "Work Productivity"
+    DISTRACTED = "Personal Productivity"
+    ENTERTAINED = "Diversion"
+
+# Define the LogEntry table
 class LogEntry(Base):
-    __tablename__ = 'log_entries'  # Specifies the name of the table in the database
-
-    # Define the columns of the table:
-    id = Column(Integer, primary_key=True)  # Primary key column, uniquely identifies each record
-    timestamp = Column(DateTime)  # Records the date and time of the log entry
-    date = Column(String)  # Records the date as a string
-    hour = Column(Integer)  # Records the hour of the log entry
-    minute = Column(Integer)  # Records the minute of the log entry
-    window_url = Column(String)  # URL of the window being logged
-    window_url_base = Column(String)  # Base URL of the window, possibly for easier categorization
-    window_title = Column(String)  # Title of the window
-    keyboard_events = Column(Integer)  # Number of keyboard events during the logged time
-    mouse_events = Column(Integer)  # Number of mouse events during the logged time
-
-class LogEntryAgg(Base):
-    __tablename__ = 'LogEntryAgg'
+    __tablename__ = 'log_entries'
 
     id = Column(Integer, primary_key=True)
-    timestamp = Column(DateTime)
-    date = Column(String)
-    hour = Column(Integer)
-    minute = Column(Integer)
+    timestamp = Column(DateTime, default=func.now())
     window_url = Column(String)
     window_url_base = Column(String)
     window_title = Column(String)
-    keyboard_events = Column(Integer)
-    mouse_events = Column(Integer)
+    keyboard_events = Column(Integer, default=0)
+    mouse_events = Column(Integer, default=0)
+    category_id = Column(Integer, ForeignKey('window_categories.id'))
+    session_num = Column(Integer)  # New column for session tracking
 
-# Define the 'WindowCategory' table structure.
+    # Relationships
+    category = relationship("WindowCategory", back_populates="entries")
+
+# Define the WindowCategory table
 class WindowCategory(Base):
-    __tablename__ = 'window_categories'  # Table name in the database
+    __tablename__ = 'window_categories'
 
-    # Define the columns of the table:
-    id = Column(Integer, primary_key=True, autoincrement=True)  # Auto-incremented primary key
-    window_title = Column(String)  # Title of the window for categorization
-    window_url_base = Column(String)  # Base URL for categorization
-    window_category = Column(String)  # Categorical label assigned to the window
-    row_count = Column(Integer)  # Potential count of rows, possibly indicating the number of occurrences
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    window_title = Column(String)
+    window_url_base = Column(String)
+    window_category = Column(Enum(ActivityCategory))
+    
+    # Relationships
+    entries = relationship("LogEntry", back_populates="category")
 
-# Apply the defined table structures to the connected database.
+# Create indexes for performance
+Index('idx_window_url_base', LogEntry.window_url_base)
+Index('idx_timestamp', LogEntry.timestamp)
+
+# Create the tables
 Base.metadata.create_all(engine)
