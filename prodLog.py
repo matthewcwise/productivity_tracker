@@ -43,6 +43,7 @@ def on_click(x, y, button, pressed, verbose=False):
     mouse_count += 1
 
 def on_scroll(x, y, dx, dy, verbose=False):
+def on_scroll(x, y, dx, dy, verbose=False):
     global mouse_count
     mouse_count += 1
 
@@ -77,7 +78,6 @@ mouse_listener = mouse.Listener(on_click=on_click, on_scroll=on_scroll)
 mouse_listener.start()
 
 # Create a session to interact with the database
-engine = create_engine('sqlite:///window_activity.db')
 session = Session(engine)
 
 log_count = 0
@@ -128,6 +128,7 @@ try:
         session.add(new_log_entry)
         session.commit()
 
+        if log_count % log_interval_calc == 0:
         if log_count % log_interval_calc == 0:
             print(f"Latest Row ({log_count}):", current_time.strftime('%Y-%m-%d %H:%M:%S'),
                   window_title, key_count, mouse_count, flow_score, current_user)
