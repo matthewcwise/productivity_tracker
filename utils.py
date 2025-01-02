@@ -4,35 +4,119 @@ import pandas as pd
 ########################
 ###  Logging Functions
 ########################
-# Initialize the event counters
-key_count = 0
-mouse_count = 0
 
-# Keyboard event handler
-def on_press(key):
-    global key_count
-    key_count += 1
-    print("key count:",key_count)
+# DATA CLEANUP
 
-# Mouse event handlers
-def on_click(x, y, button, pressed):
-    global mouse_count
-    mouse_count += 1
-    print("mouse_count:",mouse_count)
+def clean_window_title(window_title):
+    """Clean up the window title."""
+    if window_title and window_title.startswith("\u25CF "):
+        window_title = window_title[2:].strip()
+    return window_title
 
-def on_scroll(x, y, dx, dy):
-    global mouse_count
-    mouse_count += 1
-    print("mouse_count:",mouse_count)
+def determine_application(window_title):
+    if window_title.endswith(" - Google Chrome"):
+        # print("Window Title Ends with Google Chrome, ", window_title)
+        return "Google Chrome"
+    elif window_title.endswith("- Visual Studio Code"):
+        return "Visual Studio Code"
+    elif window_title in ["Portal - Direct3D 9", "Windows PowerShell"]:
+        return window_title
+    elif "-" in window_title:
+        parts = [part.strip() for part in window_title.split("-")]
+        return parts[-1]
+    else:
+        return window_title
+    
+def vs_code_breakdown(window_title):
+    abbreviated = window_title.split(" - Visual Studio Code")[0].strip()
+    folder = abbreviated.split("-")[1].strip()
+    file = abbreviated.split("-")[0].strip()
+    
+    return folder, file
 
-# Reset event counters
-def reset_event_counters():
-    global mouse_count, key_count
-    mouse_count = 0
-    key_count = 0
-    print("key count:",key_count)
-    print("mouse_count:",mouse_count)
+def chrome_breakdown(window_title):
+    abbreviated = window_title.split(" - Google Chrome")[0].strip()
+    folder = None
+    file = None
 
+    try:
+        
+        if abbreviated.startswith("Amazon.com"):
+            folder = "Amazon.com"
+            file = abbreviated.split(":")[1].strip()
+
+        elif abbreviated.startswith("Google Calendar"):
+            folder = "Google Calendar"
+            file = abbreviated.split("Calendar -")[1].strip()
+
+        elif abbreviated.endswith("LinkedIn"):
+            folder = "LinkedIn"
+            file = abbreviated.split("| LinkedIn")[0].strip()
+            
+        elif abbreviated.endswith("YouTube"):
+            folder = "YouTube"
+            file = abbreviated.split("- YouTube")[0].strip()
+            
+        elif abbreviated.endswith("Messenger"):
+            folder = "Facebook Messenger"
+            file = abbreviated.split("| Messenger")[0].strip()
+            
+        elif abbreviated.endswith("- Slack"):
+            folder = "Slack"
+            file = abbreviated.split("- Slack")[0].strip()
+
+        elif abbreviated.endswith("- Search"):
+            folder = "Search"
+            file = abbreviated.split("- Search")[0].strip()
+
+        elif abbreviated.endswith("- Wikipedia"):
+            folder = "Wikipedia"
+            file = abbreviated.split("- Wikipedia")[0].strip()
+
+        elif abbreviated.endswith("- Google Sheets"):
+            folder = "Google Sheets"
+            file = abbreviated.split("- Google Sheets")[0].strip()
+
+        elif abbreviated == "Your Orders":
+            folder = "Amazon.com"
+            file = "Your Orders"
+
+        else:
+            folder = abbreviated
+            file = None
+
+        # if primary_window_str in ["Messenger"]:
+        #     log_type = "messaging"
+        #     category = "communication"
+        #     project = "communication"
+        
+        # elif primary_window_str in ["Database Productivity Tracking Improvements"]:
+        #     project = 'prod'
+        #     log_type = 'coding'
+        #     category = 'Personal Coding'
+        
+        # elif primary_window_str in ["Track which conferences are winning the 2024"] or secondary in ["Stream the Game Live"]:
+
+        #     project = 'NCAAF'
+        #     log_type = 'football'
+        #     category = 'diversion'
+        
+        return folder, file
+    except:
+        return None, None
+
+def assign_container_detail(window_title, application):
+    try:
+        if application == "Visual Studio Code":
+            return vs_code_breakdown(window_title)
+        elif application == "Google Chrome":
+            return chrome_breakdown(window_title)
+        else:
+            return None, None
+    except:
+        return None, None
+
+    
 
 # def get_current_session_number():
 #     # Query the maximum session_number in the database

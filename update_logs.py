@@ -1,24 +1,9 @@
 from sqlalchemy import create_engine, text
+from utils import clean_window_title, determine_application, assign_container_detail
 
 # Connect to the existing database
 engine = create_engine('sqlite:///window_activity.db')
 
-def clean_window_title(window_title):
-    """Clean up the window title."""
-    if window_title and window_title.startswith("\u25CF "):
-        window_title = window_title[2:].strip()
-    return window_title
-
-def determine_application(window_title):
-    if window_title.endswith(" - Google Chrome"):
-        return "Google Chrome"
-    if window_title in ["Portal - Direct3D 9", "Windows PowerShell"]:
-        return window_title
-    elif "-" in window_title:
-        parts = [part.strip() for part in window_title.split("-")]
-        return parts[-1]
-    else:
-        return window_title
 
 def extract_window_details(window_title):
     """Extract details from the window title."""
@@ -106,38 +91,30 @@ def update_log_entries():
                 keyboard_events = row[2]
                 mouse_events = row[3]
                 
-                
                 window_title = clean_window_title(window_title)
                 application = determine_application(window_title)
+                domain, detail = assign_container_detail(window_title, application)
+                project = "Unknown"
+                category = "Unknown"
+                log_type = "Unknown"
                 
                 active = 1 if keyboard_events + mouse_events > 0 else 0
-
-                # Extract details from window_title
-                details = extract_window_details(window_title)
-                category, project, log_type = determine_category_and_project(window_title, details["application"])
-                if details["application"] == "Google Chrome":
-                    category, project, log_type = determine_chrome_details(details["primary_detail"], details["secondary_detail"], window_title, category, project, log_type)
-
-                # Debugging output
-                # print(f"Updating: ID={log_id}, type={log_type}, category={category}, "
-                    #   f"project={project}, active={active}, application={details['application']}, "
-                    #   f"primary_detail={details['primary_detail']}, secondary_detail={details['secondary_detail']}")
 
                 # Perform the update
                 conn.execute(text("""
                     UPDATE log_entries
                     SET type = :type, category = :category, project_name = :project, 
                         active = :active, application = :application,
-                        primary_window_str = :primary_window_str, secondary = :secondary
+                        domain = :domain, detail = :detail
                     WHERE id = :id
                 """), {
                     "type": log_type,
                     "category": category,
                     "project": project,
                     "active": active,
-                    "application": details["application"],
-                    "primary_window_str": details["primary_detail"],
-                    "secondary": details["secondary_detail"],
+                    "application": application,
+                    "detail": detail,
+                    "domain": domain,
                     "id": log_id
                 })
 

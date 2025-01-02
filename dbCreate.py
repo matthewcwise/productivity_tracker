@@ -13,9 +13,8 @@ Base = declarative_base()
 # Define predefined categories
 from enum import Enum as PyEnum
 class ActivityCategory(PyEnum):
-    PRODUCTIVE = "Work Productivity"
-    DISTRACTED = "Personal Productivity"
-    ENTERTAINED = "Diversion"
+    PRODUCTIVE = "Work"
+    DISTRACTED = "Personal"
 
 # Define the LogEntry table
 class LogEntry(Base):
@@ -23,6 +22,11 @@ class LogEntry(Base):
 
     id = Column(Integer, primary_key=True)
     timestamp = Column(DateTime, default=func.now())
+    application = Column(String)
+    domain = Column(String)
+    detail = Column(String)
+    flow_score = Column(Integer)
+    focus_score = Column(Integer)
     window_url = Column(String)
     window_url_base = Column(String)
     window_title = Column(String)
@@ -30,6 +34,7 @@ class LogEntry(Base):
     mouse_events = Column(Integer, default=0)
     category_id = Column(Integer, ForeignKey('window_categories.id'))
     session_num = Column(Integer)  # New column for session tracking
+    user = Column(String)  # New column for user tracking
 
     # Relationships
     category = relationship("WindowCategory", back_populates="entries")

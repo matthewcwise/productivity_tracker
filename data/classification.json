@@ -1,0 +1,42 @@
+{
+    "Spotify": {
+        "default_category": "Personal",
+        "default_tag": "Music"
+    },
+    "Slack": {
+        "default_category": "Work",
+        "default_tag": "Communication"
+    },
+    "Visual Studio Code": {
+        "folder_map": {
+            "tai_ai_api": {
+                "default_category": "Work",
+                "project": "API",
+                "tag": "Coding"
+            },
+            "prod": {
+                "default_category": "Personal",
+                "project": "Productivity Tracker",
+                "cag": "Coding"
+            }
+        }
+    },
+    "Google Chrome": {
+        "folder_map": {
+            "tai_ai_api": {
+                "default_category": "Work",
+                "project": "API",
+                "tag": "Coding"
+            },
+            "prod": {
+                "default_category": "Personal",
+                "project": "Productivity Tracker",
+                "cag": "Coding"
+            }
+        }
+    },
+    "DEFAULT": {
+        "default_category": "Unknown",
+        "default_tag": "Misc"
+    }
+}
