@@ -121,7 +121,7 @@ try:
             timestamp=current_time,
             window_title=window_title,
             application=application,
-            domain=container,
+            domain=domain,
             detail=detail,
             keyboard_events=key_count,
             mouse_events=mouse_count,

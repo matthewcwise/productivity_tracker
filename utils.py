@@ -50,19 +50,22 @@ enders = [" - Google Chrome",
           "- Search",
           "- Wikipedia",
           "- Google Sheets",
+          "- Google Docs",
           "| ESPN",
           "- Watch ESPN",
           "- YouTube"
           "NCAA.com"]            
 beginners = ["Amazon.com",
+             "Meet - ",
              "Google Calendar - ",
+             "TherapyAI - Calendar - ",
              "- YouTube",
              "Messenger",
              "Slack", "Search", "Wikipedia", "Google Sheets", "ESPN", "Your Orders"]
 
 def chrome_breakdown(window_title):
     abbreviated = window_title.split(" - Google Chrome")[0].strip()
-    domain = None
+    domain = abbreviated
     detail = None
     # try:
     #     # This is the list of ChatGPT conversations
@@ -157,6 +160,15 @@ def assign_container_detail(window_title, application):
 def determine_project(application, container, detail, previous_project):
     if application == "Visual Studio Code":
         return container
+    
+    if application == "WhatsApp":
+        return "Communication"
+    
+    # if application in ["pgAdmin 4", "Calculator", "Task Switching"]:
+    #     return previous_project
+    
+    if detail in ["Matt/Thomas 1:1 (recurring)", "Notes - Matt/Thomas 1:1 (recurring)"]:
+        return "Matt/Thomas 1:1"
     
     elif application == "Google Chrome":
         if container == "ChatGPT":
