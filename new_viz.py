@@ -92,4 +92,10 @@ axs[1, 1].legend(title="Projects", loc='upper left', labels=top_projects_with_ot
 
 # Adjust layout and save
 plt.tight_layout()
-plt.savefig('focus_scores_with_activity_and_projects_chart_2x2.png')
+from datetime import datetime
+
+# Generate today's date in YYYY-MM-DD format
+today_date = datetime.now().strftime('%Y-%m-%d')
+
+# Update the filename to include today's date
+plt.savefig(f'focus_scores_with_activity_and_projects_chart_2x2_{today_date}.png')
